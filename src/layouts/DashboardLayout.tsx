@@ -53,8 +53,10 @@ export function DashboardLayout() {
   const mainContentStyle: React.CSSProperties = {
     marginLeft: isMobile ? 0 : '256px',
     padding: isMobile ? '16px' : '24px',
-    paddingTop: isMobile ? '84px' : '84px',
+    paddingTop: isMobile ? '76px' : '84px',
+    paddingBottom: '24px',
     minHeight: '100vh',
+    backgroundColor: '#f8fafc',
   };
 
   return (
