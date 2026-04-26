@@ -25,13 +25,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   
-  if (!user?.rolesAccepted && currentPath !== '/roles') {
-    return <Navigate to="/roles" replace />;
-  }
-  
-  if (user?.rolesAccepted && currentPath === '/roles') {
-    return <Navigate to="/dashboard" replace />;
-  }
   
   return <>{children}</>;
 }
