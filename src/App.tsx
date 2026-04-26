@@ -9,6 +9,7 @@ import { UnverifiedPGs } from './pages/UnverifiedPGs';
 import { DailyActivity } from './pages/DailyActivity';
 import { MyPGs } from './pages/MyPGs';
 import { AddRooms } from './pages/AddRooms';
+import { FieldManual } from './pages/FieldManual';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
       { path: 'my-pgs', element: <MyPGs /> },
       { path: 'add-rooms/:pgId', element: <AddRooms /> },
       { path: 'activity', element: <DailyActivity /> },
+      { path: 'manual', element: <FieldManual /> },
       { path: 'roles', element: <RolesAndResponsibilities /> },
     ]
   },

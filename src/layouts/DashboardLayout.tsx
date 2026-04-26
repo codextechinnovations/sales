@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, MapPin, LogOut, Menu, X, UserPlus, FileText, CheckSquare, Building2 } from 'lucide-react';
+import { LayoutDashboard, MapPin, LogOut, Menu, X, UserPlus, FileText, CheckSquare, Building2, BookOpen } from 'lucide-react';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -9,6 +9,7 @@ const navItems = [
   { path: '/my-pgs', label: 'My PGs', icon: MapPin },
   { path: '/unverified', label: 'Unverified PGs', icon: MapPin },
   { path: '/activity', label: 'Daily Activity', icon: CheckSquare },
+  { path: '/manual', label: 'Field Manual', icon: BookOpen },
   { path: '/roles', label: 'Roles & Responsibilities', icon: FileText },
 ];
 
