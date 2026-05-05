@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { User, Home, Plus, Check, Loader, DollarSign, Image, X } from 'lucide-react';
+import { User, Home, Plus, Check, Loader, DollarSign, Image, X, MapPin } from 'lucide-react';
 import { salesPost } from '../services/apiClient';
+import { AddressAutocomplete } from '../components/AddressAutocomplete';
 
 const getContainerStyle = (isMobile: boolean): React.CSSProperties => ({
   minHeight: '100vh',
@@ -151,6 +152,7 @@ const submitBtnStyle: React.CSSProperties = {
 const getDefaultPg = () => ({
   name: '', type: 'colive', totalRooms: '', address: '', city: '', state: '', pincode: '',
   latitude: '', longitude: '', amenities: [],
+  stayType: 'both',
   longTermRent: { single: '', double: '', triple: '' },
   shortTermRent: { single: '', double: '', triple: '' },
   images: [] as string[]
@@ -361,24 +363,36 @@ export function PGOwnerForm() {
             ✓ Location captured: {location.lat}, {location.lng}
           </div>
         )}
-        <div style={{ ...formGridStyle, marginTop: '20px' }}>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={getLabelStyle(isMobile)}>Address</label>
-            <input style={getInputStyle(isMobile)} placeholder="Enter address" value={owner.address} onChange={(e) => setOwner({ ...owner, address: e.target.value })} />
-          </div>
-          <div>
-            <label style={getLabelStyle(isMobile)}>City</label>
-            <input style={getInputStyle(isMobile)} placeholder="City" value={owner.city} onChange={(e) => setOwner({ ...owner, city: e.target.value })} />
-          </div>
-          <div>
-            <label style={getLabelStyle(isMobile)}>State</label>
-            <input style={getInputStyle(isMobile)} placeholder="State" value={owner.state} onChange={(e) => setOwner({ ...owner, state: e.target.value })} />
-          </div>
-          <div>
-            <label style={getLabelStyle(isMobile)}>Pincode</label>
-            <input style={getInputStyle(isMobile)} placeholder="Pincode" value={owner.pincode} onChange={(e) => setOwner({ ...owner, pincode: e.target.value })} />
-          </div>
-        </div>
+            <div style={{ ...formGridStyle, marginTop: '20px' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={getLabelStyle(isMobile)}>Search Address</label>
+                <AddressAutocomplete
+                  value={owner.address}
+                  onChange={(v) => setOwner({ ...owner, address: v })}
+                  onSelect={(data) => setOwner(prev => ({
+                    ...prev,
+                    address: data.address,
+                    city: data.city,
+                    state: data.state,
+                    pincode: data.pincode
+                  }))}
+                  placeholder="Type to search address..."
+                  inputStyle={getInputStyle(isMobile)}
+                />
+              </div>
+              <div>
+                <label style={getLabelStyle(isMobile)}>City</label>
+                <input style={getInputStyle(isMobile)} placeholder="City" value={owner.city} onChange={(e) => setOwner({ ...owner, city: e.target.value })} />
+              </div>
+              <div>
+                <label style={getLabelStyle(isMobile)}>State</label>
+                <input style={getInputStyle(isMobile)} placeholder="State" value={owner.state} onChange={(e) => setOwner({ ...owner, state: e.target.value })} />
+              </div>
+              <div>
+                <label style={getLabelStyle(isMobile)}>Pincode</label>
+                <input style={getInputStyle(isMobile)} placeholder="Pincode" value={owner.pincode} onChange={(e) => setOwner({ ...owner, pincode: e.target.value })} />
+              </div>
+            </div>
       </div>
 
       {/* PG Properties */}
@@ -420,8 +434,21 @@ export function PGOwnerForm() {
                 <input style={getInputStyle(isMobile)} type="number" placeholder="Number of rooms" value={pg.totalRooms} onChange={(e) => updatePgField(index, 'totalRooms', e.target.value)} />
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={getLabelStyle(isMobile)}>Address *</label>
-                <input style={getInputStyle(isMobile)} placeholder="Enter address" value={pg.address} onChange={(e) => updatePgField(index, 'address', e.target.value)} />
+                <label style={getLabelStyle(isMobile)}>Search Address</label>
+                <AddressAutocomplete
+                  value={pg.address}
+                  onChange={(v) => updatePgField(index, 'address', v)}
+                  onSelect={(data) => {
+                    updatePgField(index, 'address', data.address);
+                    updatePgField(index, 'city', data.city);
+                    updatePgField(index, 'state', data.state);
+                    updatePgField(index, 'pincode', data.pincode);
+                    updatePgField(index, 'latitude', data.latitude);
+                    updatePgField(index, 'longitude', data.longitude);
+                  }}
+                  placeholder="Type to search address..."
+                  inputStyle={getInputStyle(isMobile)}
+                />
               </div>
               <div>
                 <label style={getLabelStyle(isMobile)}>City *</label>
@@ -442,29 +469,42 @@ export function PGOwnerForm() {
               <div style={{ ...cardTitleStyle, marginBottom: '15px' }}>
                 <DollarSign size={20} /> Pricing
               </div>
+
+              {/* Stay Type Selector */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={getLabelStyle(isMobile)}>Stay Type</label>
+                <select style={getInputStyle(isMobile)} value={pg.stayType || 'both'} onChange={(e) => updatePgField(index, 'stayType', e.target.value)}>
+                  <option value="long">Long Stay Only (Monthly)</option>
+                  <option value="short">Short Stay Only (Daily)</option>
+                  <option value="both">Both (Monthly & Daily)</option>
+                </select>
+              </div>
               
               <div style={getPricingGridStyle(isMobile)}>
                 {/* Monthly Rent (Long Term) */}
-                <div style={pricingColumnStyle}>
-                  <div style={pricingColumnHeaderStyle}>Monthly Rent (Long Term)</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: '12px' }}>Single Sharing</label>
-                      <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.longTermRent?.single || ''} onChange={(e) => updateRentField(index, 'longTermRent', 'single', e.target.value)} />
-                    </div>
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: '12px' }}>Double Sharing</label>
-                      <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.longTermRent?.double || ''} onChange={(e) => updateRentField(index, 'longTermRent', 'double', e.target.value)} />
-                    </div>
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: '12px' }}>Triple Sharing</label>
-                      <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.longTermRent?.triple || ''} onChange={(e) => updateRentField(index, 'longTermRent', 'triple', e.target.value)} />
+                {(pg.stayType === 'long' || pg.stayType === 'both') && (
+                  <div style={pricingColumnStyle}>
+                    <div style={pricingColumnHeaderStyle}>Monthly Rent (Long Term)</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div>
+                        <label style={{ ...labelStyle, fontSize: '12px' }}>Single Sharing</label>
+                        <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.longTermRent?.single || ''} onChange={(e) => updateRentField(index, 'longTermRent', 'single', e.target.value)} />
+                      </div>
+                      <div>
+                        <label style={{ ...labelStyle, fontSize: '12px' }}>Double Sharing</label>
+                        <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.longTermRent?.double || ''} onChange={(e) => updateRentField(index, 'longTermRent', 'double', e.target.value)} />
+                      </div>
+                      <div>
+                        <label style={{ ...labelStyle, fontSize: '12px' }}>Triple Sharing</label>
+                        <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.longTermRent?.triple || ''} onChange={(e) => updateRentField(index, 'longTermRent', 'triple', e.target.value)} />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Daily Rent (Short Term) */}
-                <div style={{ ...pricingColumnStyle, background: '#fff9f0', borderColor: '#ffe4c4' }}>
+                {(pg.stayType === 'short' || pg.stayType === 'both') && (
+                  <div style={{ ...pricingColumnStyle, background: '#fff9f0', borderColor: '#ffe4c4' }}>
                   <div style={{ ...pricingColumnHeaderStyle, color: '#f093fb' }}>Daily Rent (Short Term)</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div>
@@ -481,6 +521,7 @@ export function PGOwnerForm() {
                     </div>
                   </div>
                 </div>
+                )}
               </div>
             </div>
 
