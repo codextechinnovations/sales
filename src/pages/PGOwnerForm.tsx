@@ -474,15 +474,15 @@ export function PGOwnerForm() {
               <div style={{ marginBottom: '20px' }}>
                 <label style={getLabelStyle(isMobile)}>Stay Type</label>
                 <select style={getInputStyle(isMobile)} value={pg.stayType || 'both'} onChange={(e) => updatePgField(index, 'stayType', e.target.value)}>
-                  <option value="long">Long Stay Only (Monthly)</option>
-                  <option value="short">Short Stay Only (Daily)</option>
+                  <option value="long_term">Long Stay Only (Monthly)</option>
+                  <option value="short_term">Short Stay Only (Daily)</option>
                   <option value="both">Both (Monthly & Daily)</option>
                 </select>
               </div>
               
               <div style={getPricingGridStyle(isMobile)}>
                 {/* Monthly Rent (Long Term) */}
-                {(pg.stayType === 'long' || pg.stayType === 'both') && (
+                {(pg.stayType === 'long_term' || pg.stayType === 'both') && (
                   <div style={pricingColumnStyle}>
                     <div style={pricingColumnHeaderStyle}>Monthly Rent (Long Term)</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -503,7 +503,7 @@ export function PGOwnerForm() {
                 )}
 
                 {/* Daily Rent (Short Term) */}
-                {(pg.stayType === 'short' || pg.stayType === 'both') && (
+                {(pg.stayType === 'short_term' || pg.stayType === 'both') && (
                   <div style={{ ...pricingColumnStyle, background: '#fff9f0', borderColor: '#ffe4c4' }}>
                   <div style={{ ...pricingColumnHeaderStyle, color: '#f093fb' }}>Daily Rent (Short Term)</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
