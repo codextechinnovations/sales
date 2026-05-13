@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { User, Home, Plus, Check, Loader, DollarSign, Image, X, MapPin } from 'lucide-react';
+import { User, Home, Plus, Check, Loader, DollarSign, Image, X, MapPin, Video } from 'lucide-react';
 import { salesPost } from '../services/apiClient';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 
@@ -155,7 +155,8 @@ const getDefaultPg = () => ({
   stayType: 'both',
   longTermRent: { single: '', double: '', triple: '' },
   shortTermRent: { single: '', double: '', triple: '' },
-  images: [] as string[]
+  images: [] as string[],
+  videos: [] as string[]
 });
 
 export function PGOwnerForm() {
@@ -251,6 +252,36 @@ export function PGOwnerForm() {
   const removeImage = (pgIndex: number, imgIndex: number) => {
     const updated = [...pgList];
     updated[pgIndex].images = updated[pgIndex].images.filter((_: string, i: number) => i !== imgIndex);
+    setPgList(updated);
+  };
+
+  const handleVideoUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const processFiles = async () => {
+      const newVideos: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        newVideos.push(base64);
+      }
+
+      const updated = [...pgList];
+      updated[index].videos = [...(updated[index].videos || []), ...newVideos];
+      setPgList(updated);
+    };
+
+    processFiles();
+  };
+
+  const removeVideo = (pgIndex: number, vidIndex: number) => {
+    const updated = [...pgList];
+    updated[pgIndex].videos = updated[pgIndex].videos.filter((_: string, i: number) => i !== vidIndex);
     setPgList(updated);
   };
 
@@ -570,6 +601,30 @@ export function PGOwnerForm() {
                   <Image size={24} color="#94a3b8" />
                   <span style={{ fontSize: '10px', color: '#94a3b8' }}>Add Photo</span>
                   <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={(e) => handleImageUpload(index, e)} />
+                </label>
+              </div>
+            </div>
+
+            {/* Videos */}
+            <div style={{ marginTop: '20px' }}>
+              <label style={{ ...labelStyle, marginBottom: '15px' }}>PG Video Tour</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                {pg.videos?.map((vid: string, vidIndex: number) => (
+                  <div key={vidIndex} style={{ position: 'relative', width: '120px', height: '80px' }}>
+                    <video src={vid} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                    <button
+                      type="button"
+                      onClick={() => removeVideo(index, vidIndex)}
+                      style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                <label style={{ width: '120px', height: '80px', border: '2px dashed #cbd5e1', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc' }}>
+                  <Video size={24} color="#94a3b8" />
+                  <span style={{ fontSize: '10px', color: '#94a3b8' }}>Add Video</span>
+                  <input type="file" accept="video/*" multiple style={{ display: 'none' }} onChange={(e) => handleVideoUpload(index, e)} />
                 </label>
               </div>
             </div>
