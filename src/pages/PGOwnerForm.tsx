@@ -334,7 +334,7 @@ export function PGOwnerForm() {
         const addr = data.address;
         setOwner(prev => ({
           ...prev,
-          address: addr.road || addr.suburb || '',
+          address: addr.road || addr.suburb || addr.neighbourhood || addr.village || addr.town || '',
           city: addr.city || addr.town || addr.village || '',
           state: addr.state || '',
           pincode: addr.postcode || ''
