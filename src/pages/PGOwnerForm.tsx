@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { User, Home, Plus, Check, Loader, DollarSign, Image, X, MapPin, Video } from 'lucide-react';
+import { User, Home, Plus, Check, Loader, DollarSign, Image, X, MapPin, Video, Camera, Star } from 'lucide-react';
 import { salesPost } from '../services/apiClient';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 
@@ -35,6 +35,17 @@ const amenitiesList = [
   { value: 'lift', label: 'Lift', icon: '🛗' },
   { value: 'parking', label: 'Parking', icon: '🅿️' },
   { value: 'ac', label: 'AC', icon: '❄️' },
+];
+
+const imageCategories = [
+  { id: 'banner', label: 'Banner', emoji: '🖼️', desc: 'Main PG photo', color: '#667eea' },
+  { id: 'hall', label: 'Hall / Common Area', emoji: '🏠', desc: 'Living space', color: '#764ba2' },
+  { id: 'room', label: 'Room', emoji: '🛏️', desc: 'Bedroom', color: '#06b6d4' },
+  { id: 'kitchen', label: 'Kitchen', emoji: '🍳', desc: 'Cooking area', color: '#f59e0b' },
+  { id: 'washroom', label: 'Washroom', emoji: '🚿', desc: 'Bathroom', color: '#10b981' },
+  { id: 'corridor', label: 'Corridor', emoji: '🚪', desc: 'Hallway/Passage', color: '#8b5cf6' },
+  { id: 'entrance', label: 'Entrance / Gate', emoji: '🚧', desc: 'Entry point', color: '#ef4444' },
+  { id: 'other', label: 'Other', emoji: '📷', desc: 'Other area', color: '#94a3b8' },
 ];
 
 const getCardTitleStyle = (isMobile: boolean): React.CSSProperties => ({
@@ -155,7 +166,7 @@ const getDefaultPg = () => ({
   stayType: 'both',
   longTermRent: { single: '', double: '', triple: '' },
   shortTermRent: { single: '', double: '', triple: '' },
-  images: [] as string[],
+  images: [] as { url: string; category: string }[],
   videos: [] as string[]
 });
 
@@ -169,6 +180,9 @@ export function PGOwnerForm() {
     name: '', phone: '', email: '', password: '', address: '', city: '', state: '', pincode: ''
   });
   const [pgList, setPgList] = useState<any[]>([getDefaultPg()]);
+  const [selectedPgIndex, setSelectedPgIndex] = useState<number | null>(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[] | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -232,26 +246,33 @@ export function PGOwnerForm() {
 
   const handleImageUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
+    setSelectedPgIndex(index);
+    setPendingFiles(Array.from(files));
+    setShowCategoryModal(true);
+  };
 
-    const processFiles = async () => {
-      const newImages: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const compressed = await compressImage(files[i]);
-        newImages.push(compressed);
-      }
+  const handleCategorySelect = async (category: string) => {
+    if (selectedPgIndex === null || !pendingFiles) return;
+    setShowCategoryModal(false);
 
-      const updated = [...pgList];
-      updated[index].images = [...(updated[index].images || []), ...newImages];
-      setPgList(updated);
-    };
+    const newImages: { url: string; category: string }[] = [];
+    for (const file of pendingFiles) {
+      const compressed = await compressImage(file);
+      newImages.push({ url: compressed, category });
+    }
 
-    processFiles();
+    const updated = [...pgList];
+    updated[selectedPgIndex].images = [...(updated[selectedPgIndex].images || []), ...newImages];
+    setPgList(updated);
+
+    setSelectedPgIndex(null);
+    setPendingFiles(null);
   };
 
   const removeImage = (pgIndex: number, imgIndex: number) => {
     const updated = [...pgList];
-    updated[pgIndex].images = updated[pgIndex].images.filter((_: string, i: number) => i !== imgIndex);
+    updated[pgIndex].images = updated[pgIndex].images.filter((_: any, i: number) => i !== imgIndex);
     setPgList(updated);
   };
 
@@ -374,14 +395,61 @@ export function PGOwnerForm() {
     }
   };
 
+  const getCategoryColor = (categoryId: string) => {
+    const cat = imageCategories.find(c => c.id === categoryId);
+    return cat?.color || '#667eea';
+  };
+
   return (
     <div style={getContainerStyle(isMobile)}>
+      {showCategoryModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '16px', padding: '24px', maxWidth: '500px', width: '100%',
+            maxHeight: '80vh', overflowY: 'auto'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <Camera size={32} color="#667eea" style={{ marginBottom: '8px' }} />
+              <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#333', margin: 0 }}>Select Image Category</h3>
+              <p style={{ fontSize: '14px', color: '#666', margin: '8px 0 0' }}>All selected photos will be tagged as:</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+              {imageCategories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategorySelect(cat.id)}
+                  style={{
+                    padding: '16px 12px', border: '2px solid #e8ecff', borderRadius: '12px',
+                    background: '#f8f9ff', cursor: 'pointer', transition: 'all 0.2s',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = cat.color; (e.currentTarget as HTMLButtonElement).style.background = '#fff'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#e8ecff'; (e.currentTarget as HTMLButtonElement).style.background = '#f8f9ff'; }}
+                >
+                  <span style={{ fontSize: '28px' }}>{cat.emoji}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#333' }}>{cat.label}</span>
+                  <span style={{ fontSize: '11px', color: '#888' }}>{cat.desc}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => { setShowCategoryModal(false); setSelectedPgIndex(null); setPendingFiles(null); }}
+              style={{ marginTop: '16px', width: '100%', padding: '12px', background: '#f1f5f9', border: 'none', borderRadius: '10px', cursor: 'pointer', fontSize: '14px', color: '#666' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1 style={{ fontSize: isMobile ? '28px' : '40px', fontWeight: 700, marginBottom: '10px', color: '#333' }}>PG Owner Registration</h1>
         <p style={{ fontSize: isMobile ? '14px' : '18px', color: '#666' }}>Register as a PG owner and manage your properties</p>
       </div>
 
-      {/* Owner Info */}
       <div style={getCardStyle(isMobile)}>
         <div style={getCardTitleStyle(isMobile)}>
           <User size={20} /> Owner Information
@@ -406,7 +474,6 @@ export function PGOwnerForm() {
         </div>
       </div>
 
-      {/* Location */}
       <div style={getCardStyle(isMobile)}>
         <div style={getCardTitleStyle(isMobile)}>
           <Plus size={20} /> Location Details
@@ -451,7 +518,6 @@ export function PGOwnerForm() {
             </div>
       </div>
 
-      {/* PG Properties */}
       <div style={getCardStyle(isMobile)}>
         <div style={getCardTitleStyle(isMobile)}>
           <Home size={20} /> PG Properties
@@ -470,7 +536,7 @@ export function PGOwnerForm() {
             <div style={{ fontSize: '18px', fontWeight: 600, color: '#667eea', marginBottom: '20px' }}>
               PG Property {index + 1}
             </div>
-            
+
             <div style={getFormGridStyle(isMobile)}>
               <div>
                 <label style={getLabelStyle(isMobile)}>PG Name *</label>
@@ -520,13 +586,11 @@ export function PGOwnerForm() {
               </div>
             </div>
 
-            {/* Pricing Section */}
             <div style={pricingSectionStyle}>
               <div style={{ ...cardTitleStyle, marginBottom: '15px' }}>
                 <DollarSign size={20} /> Pricing
               </div>
 
-              {/* Stay Type Selector */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={getLabelStyle(isMobile)}>Stay Type</label>
                 <select style={getInputStyle(isMobile)} value={pg.stayType || 'both'} onChange={(e) => updatePgField(index, 'stayType', e.target.value)}>
@@ -535,9 +599,8 @@ export function PGOwnerForm() {
                   <option value="both">Both (Monthly & Daily)</option>
                 </select>
               </div>
-              
+
               <div style={getPricingGridStyle(isMobile)}>
-                {/* Monthly Rent (Long Term) */}
                 {(pg.stayType === 'long_term' || pg.stayType === 'both') && (
                   <div style={pricingColumnStyle}>
                     <div style={pricingColumnHeaderStyle}>Monthly Rent (Long Term)</div>
@@ -558,36 +621,42 @@ export function PGOwnerForm() {
                   </div>
                 )}
 
-                {/* Daily Rent (Short Term) */}
                 {(pg.stayType === 'short_term' || pg.stayType === 'both') && (
                   <div style={{ ...pricingColumnStyle, background: '#fff9f0', borderColor: '#ffe4c4' }}>
-                  <div style={{ ...pricingColumnHeaderStyle, color: '#f093fb' }}>Daily Rent (Short Term)</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: '12px' }}>Single Sharing</label>
-                      <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.shortTermRent?.single || ''} onChange={(e) => updateRentField(index, 'shortTermRent', 'single', e.target.value)} />
-                    </div>
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: '12px' }}>Double Sharing</label>
-                      <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.shortTermRent?.double || ''} onChange={(e) => updateRentField(index, 'shortTermRent', 'double', e.target.value)} />
-                    </div>
-                    <div>
-                      <label style={{ ...labelStyle, fontSize: '12px' }}>Triple Sharing</label>
-                      <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.shortTermRent?.triple || ''} onChange={(e) => updateRentField(index, 'shortTermRent', 'triple', e.target.value)} />
+                    <div style={{ ...pricingColumnHeaderStyle, color: '#f093fb' }}>Daily Rent (Short Term)</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div>
+                        <label style={{ ...labelStyle, fontSize: '12px' }}>Single Sharing</label>
+                        <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.shortTermRent?.single || ''} onChange={(e) => updateRentField(index, 'shortTermRent', 'single', e.target.value)} />
+                      </div>
+                      <div>
+                        <label style={{ ...labelStyle, fontSize: '12px' }}>Double Sharing</label>
+                        <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.shortTermRent?.double || ''} onChange={(e) => updateRentField(index, 'shortTermRent', 'double', e.target.value)} />
+                      </div>
+                      <div>
+                        <label style={{ ...labelStyle, fontSize: '12px' }}>Triple Sharing</label>
+                        <input style={getInputStyle(isMobile)} type="number" placeholder="₹0" value={pg.shortTermRent?.triple || ''} onChange={(e) => updateRentField(index, 'shortTermRent', 'triple', e.target.value)} />
+                      </div>
                     </div>
                   </div>
-                </div>
                 )}
               </div>
             </div>
 
-            {/* Photos */}
             <div style={{ marginTop: '20px' }}>
-              <label style={{ ...labelStyle, marginBottom: '15px' }}>PG Photos</label>
+              <label style={{ ...labelStyle, marginBottom: '15px' }}>PG Photos <span style={{ fontSize: '12px', color: '#888' }}>(tap to select category)</span></label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                {pg.images?.map((img: string, imgIndex: number) => (
-                  <div key={imgIndex} style={{ position: 'relative', width: '80px', height: '80px' }}>
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                {pg.images?.map((img: { url: string; category: string }, imgIndex: number) => (
+                  <div key={imgIndex} style={{ position: 'relative', width: '80px' }}>
+                    <img src={img.url} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+                    <div style={{
+                      position: 'absolute', bottom: '4px', left: '4px', right: '4px',
+                      background: getCategoryColor(img.category), color: 'white',
+                      fontSize: '9px', fontWeight: 600, padding: '2px 4px', borderRadius: '4px',
+                      textAlign: 'center', textTransform: 'uppercase'
+                    }}>
+                      {img.category}
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeImage(index, imgIndex)}
@@ -598,14 +667,13 @@ export function PGOwnerForm() {
                   </div>
                 ))}
                 <label style={{ width: '80px', height: '80px', border: '2px dashed #cbd5e1', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc' }}>
-                  <Image size={24} color="#94a3b8" />
+                  <Camera size={24} color="#94a3b8" />
                   <span style={{ fontSize: '10px', color: '#94a3b8' }}>Add Photo</span>
                   <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={(e) => handleImageUpload(index, e)} />
                 </label>
               </div>
             </div>
 
-            {/* Videos */}
             <div style={{ marginTop: '20px' }}>
               <label style={{ ...labelStyle, marginBottom: '15px' }}>PG Video Tour</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -629,7 +697,6 @@ export function PGOwnerForm() {
               </div>
             </div>
 
-            {/* Amenities */}
             <div style={{ marginTop: '20px' }}>
               <label style={{ ...labelStyle, marginBottom: '15px' }}>Amenities</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -658,7 +725,6 @@ export function PGOwnerForm() {
         ))}
       </div>
 
-      {/* Submit */}
       <button style={{ ...submitBtnStyle, opacity: loading ? 0.7 : 1, maxWidth: '900px', margin: '0 auto' }} onClick={handleSubmit} disabled={loading}>
         {loading ? <Loader className="animate-spin" size={20} /> : <Check size={20} />}
         {loading ? 'Creating...' : 'Create PG Owner Account'}
