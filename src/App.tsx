@@ -4,6 +4,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { PGOwnerForm } from './pages/PGOwnerForm';
+import { PGOwnerSignup } from './pages/pgOwnerSignup';
 import { RolesAndResponsibilities } from './pages/RolesAndResponsibilities';
 import { UnverifiedPGs } from './pages/UnverifiedPGs';
 import { DailyActivity } from './pages/DailyActivity';
@@ -31,6 +32,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  { path: '/pgownersignup', element: <PGOwnerSignup /> },
   {
     path: '/',
     element: (
