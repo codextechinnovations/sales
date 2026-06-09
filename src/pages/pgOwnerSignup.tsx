@@ -908,7 +908,7 @@ export function PGOwnerSignup() {
 
             {/* Photos */}
             <div style={{ marginBottom: 22 }}>
-              <div className="pgos-section-title"><Camera size={13} /> Property Photos</div>
+              <div className="pgos-section-title"><Camera size={13} />Upload Property Photos And Get Listed for Free on <a href="https://www.getyourstay.in" target="_blank" rel="noopener noreferrer">getyourstay.in</a></div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {pg.images.map((img, ii) => (
                   <div key={ii} className="pgos-thumb" style={{ width: 90, height: 90 }}>
