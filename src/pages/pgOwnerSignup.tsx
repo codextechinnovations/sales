@@ -617,7 +617,7 @@ export function PGOwnerSignup() {
         pgs: pgList, termsAccepted: true, termsAcceptedAt: new Date().toISOString(),
       });
       alert('Registration submitted! Our team will contact you shortly.');
-      navigate('/');
+      
     } catch (err: any) {
       alert(err.response?.data?.message || 'Submission error. Please try again.');
     } finally { setLoading(false); }
@@ -652,17 +652,17 @@ export function PGOwnerSignup() {
         <div className="pgos-hero-dots" />
         <div style={{ maxWidth: 960, margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <span className="pgos-badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.25)', marginBottom: 18, display: 'inline-flex' }}>
-            <Zap size={9} fill="currentColor" /> New Partner Registration
+            <Zap size={9} fill="currentColor" /> Manage Your PG in a Flash
           </span>
           <h1 style={{ fontFamily: FONT_DISPLAY, fontSize: isMobile ? 28 : 42, fontWeight: 700, color: '#fff', lineHeight: 1.2, marginBottom: 14, letterSpacing: '-0.5px' }}>
-            List Your PG &amp; Grow<br />
-            <span style={{ color: '#93c5fd' }}>Your Business</span>
+           Sign Up as a<br />
+            <span style={{ color: '#93c5fd' }}> PG Owner</span>
           </h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.72)', maxWidth: 480, lineHeight: 1.7, marginBottom: 28 }}>
-            Join thousands of PG owners managing bookings, payments &amp; tenants — all in one powerful dashboard.
+           Complete your registration and start managing bookings, tenants, and payments in one place.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
-            {[['Verified Listings', <Shield size={13} />], ['Instant Onboarding', <CheckCircle2 size={13} />], ['10,000+ Partners', <Star size={13} />]].map(([text, icon]) => (
+            {[ ['Instant Onboarding', <CheckCircle2 size={13} />], ['Free Verified Listings', <Shield size={13} />],['getyourstay.in', <Star size={13} />]].map(([text, icon]) => (
               <div key={text as string} style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>
                 <span style={{ color: '#93c5fd' }}>{icon as React.ReactNode}</span> {text as string}
               </div>
