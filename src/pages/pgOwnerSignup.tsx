@@ -604,12 +604,42 @@ export function PGOwnerSignup() {
 
   /* ── Submit ──────────────────────────────────────────────── */
   const handleSubmit = async () => {
+    // Owner details
     if (!owner.name || !owner.phone || !owner.email || !owner.password) { alert('Please fill all owner details'); return; }
+    // Owner address — all mandatory
+    if (!owner.address || !owner.city || !owner.state || !owner.pincode) { alert('Please fill all fields in Your Address'); return; }
+    // Terms
     if (!terms) { alert('Please accept the Terms & Conditions'); return; }
+
     for (let i = 0; i < pgList.length; i++) {
       const p = pgList[i];
-      if (!p.name || !p.type || !p.totalRooms || !p.address || !p.city) { alert(`Fill all required fields for PG ${i + 1}`); return; }
+      // PG basic fields — all mandatory
+      if (!p.name || !p.type || !p.totalRooms || !p.address || !p.city || !p.state || !p.pincode) {
+        alert(`Fill all required fields for PG ${i + 1}`); return;
+      }
+      // Amenities
+      if (!Array.isArray(p.amenities) || p.amenities.length === 0) {
+        alert(`Select at least one amenity for PG ${i + 1}`); return;
+      }
+      // Photos
+      if (!Array.isArray(p.images) || p.images.length < 2) {
+        alert(`Upload at least 2 property photos for PG ${i + 1}`); return;
+      }
+
+      // Pricing — all 3 sharing values required for any selected stay type
+      const stay = p.stayType || 'both';
+      if (stay === 'long_term' || stay === 'both') {
+        if (!p.longTermRent?.single || !p.longTermRent?.double || !p.longTermRent?.triple) {
+          alert(`Enter Monthly rent for all 3 sharing options for PG ${i + 1}`); return;
+        }
+      }
+      if (stay === 'short_term' || stay === 'both') {
+        if (!p.shortTermRent?.single || !p.shortTermRent?.double || !p.shortTermRent?.triple) {
+          alert(`Enter Daily rent for all 3 sharing options for PG ${i + 1}`); return;
+        }
+      }
     }
+
     setLoading(true);
     try {
       await salesPost('/pg-owner/public-signup', {
@@ -617,7 +647,7 @@ export function PGOwnerSignup() {
         pgs: pgList, termsAccepted: true, termsAcceptedAt: new Date().toISOString(),
       });
       alert('Registration submitted! Our team will contact you shortly.');
-      
+      navigate('/');
     } catch (err: any) {
       alert(err.response?.data?.message || 'Submission error. Please try again.');
     } finally { setLoading(false); }
@@ -731,13 +761,13 @@ export function PGOwnerSignup() {
                 inputStyle={{ width: '100%', background: C.inputBg, border: `1.5px solid ${C.border}`, borderRadius: 10, color: C.text900, fontFamily: FONT_BODY, fontSize: 14.5, padding: '12px 15px', outline: 'none' }}
               />
             </Field>
-            <Field label="City">
+            <Field label="City *">
               <input className="pgos-input" placeholder="e.g. Bengaluru" value={owner.city} onChange={e => setOwner({ ...owner, city: e.target.value })} />
             </Field>
-            <Field label="State">
+            <Field label="State *">
               <input className="pgos-input" placeholder="e.g. Karnataka" value={owner.state} onChange={e => setOwner({ ...owner, state: e.target.value })} />
             </Field>
-            <Field label="Pincode">
+            <Field label="Pincode *">
               <input className="pgos-input" placeholder="560001" value={owner.pincode} onChange={e => setOwner({ ...owner, pincode: e.target.value })} />
             </Field>
           </div>
@@ -825,10 +855,10 @@ export function PGOwnerSignup() {
               <Field label="City *">
                 <input className="pgos-input" placeholder="City" value={pg.city} onChange={e => upd(pi, 'city', e.target.value)} />
               </Field>
-              <Field label="State">
+              <Field label="State *">
                 <input className="pgos-input" placeholder="State" value={pg.state} onChange={e => upd(pi, 'state', e.target.value)} />
               </Field>
-              <Field label="Pincode">
+              <Field label="Pincode *">
                 <input className="pgos-input" placeholder="Pincode" value={pg.pincode} onChange={e => upd(pi, 'pincode', e.target.value)} />
               </Field>
             </div>
@@ -885,7 +915,7 @@ export function PGOwnerSignup() {
 
             {/* Amenities */}
             <div style={{ marginBottom: 22 }}>
-              <div className="pgos-section-title"><Zap size={13} /> Amenities</div>
+              <div className="pgos-section-title"><Zap size={13} /> Amenities <span style={{ textTransform: 'none', letterSpacing: 0, fontSize: 11, fontWeight: 500, color: C.text400, marginLeft: 4 }}>(select at least 1)</span></div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {AMENITIES.map(a => (
                   <div
@@ -908,7 +938,7 @@ export function PGOwnerSignup() {
 
             {/* Photos */}
             <div style={{ marginBottom: 22 }}>
-              <div className="pgos-section-title"><Camera size={13} />Upload Property Photos And Get Listed for Free on <a href="https://www.getyourstay.in" target="_blank" rel="noopener noreferrer">getyourstay.in</a></div>
+              <div className="pgos-section-title"><Camera size={13} /> Property Photos <span style={{ textTransform: 'none', letterSpacing: 0, fontSize: 11, fontWeight: 500, color: C.text400, marginLeft: 4 }}>(at least 2 required)</span></div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {pg.images.map((img, ii) => (
                   <div key={ii} className="pgos-thumb" style={{ width: 90, height: 90 }}>
