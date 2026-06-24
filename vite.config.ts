@@ -5,5 +5,13 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     include: ['axios']
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://api.manageyourpg.com',
+        changeOrigin: true,
+      }
+    }
   }
 })

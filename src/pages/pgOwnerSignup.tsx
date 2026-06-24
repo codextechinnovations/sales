@@ -649,6 +649,7 @@ export function PGOwnerSignup() {
       alert('Registration submitted! Our team will contact you shortly.');
       navigate('/');
     } catch (err: any) {
+      console.log(err.response?.data || err);
       alert(err.response?.data?.message || 'Submission error. Please try again.');
     } finally { setLoading(false); }
   };
