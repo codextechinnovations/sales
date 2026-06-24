@@ -642,7 +642,7 @@ export function PGOwnerSignup() {
 
     setLoading(true);
     try {
-      await salesPost('/pg-owner/public-signup', {
+      await salesPost('/api/pg-owner/public-signup', {
         ...owner, latitude: ownerLoc?.lat, longitude: ownerLoc?.lng,
         pgs: pgList, termsAccepted: true, termsAcceptedAt: new Date().toISOString(),
       });
