@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router';
+
 import {
   User, Check, Loader, DollarSign, X, MapPin, Camera,
   ChevronRight, Shield, Star, Zap, Building2, Phone, Mail,
@@ -465,7 +465,6 @@ function RupeeInput({ value, onChange }: { value: string; onChange: (v: string) 
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════════════ */
 export function PGOwnerSignup() {
-  const navigate        = useNavigate();
   const [loading, setLoading]     = useState(false);
   const [ownerLoc, setOwnerLoc]   = useState<{ lat: string; lng: string } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
@@ -477,6 +476,7 @@ export function PGOwnerSignup() {
   const [showModal, setShowModal] = useState(false);
   const [pending, setPending]     = useState<File[] | null>(null);
   const [terms, setTerms]         = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const styleInjected             = useRef(false);
 
   useEffect(() => {
@@ -665,8 +665,7 @@ export function PGOwnerSignup() {
         ...owner, latitude: ownerLoc?.lat, longitude: ownerLoc?.lng,
         pgs: pgList, termsAccepted: true, termsAcceptedAt: new Date().toISOString(),
       });
-      alert('Registration submitted! Our team will contact you shortly.');
-      navigate('/');
+      setShowSuccessModal(true);
     } catch (err: any) {
       console.log(err.response?.data || err);
       alert(err.response?.data?.message || 'Submission error. Please try again.');
@@ -1069,6 +1068,35 @@ export function PGOwnerSignup() {
             <button className="pgos-btn-ghost" style={{ width: '100%', marginTop: 14 }}
               onClick={() => { setShowModal(false); setSelPgIdx(null); setPending(null); }}>
               Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="pgos-modal-overlay">
+          <div className="pgos-modal" style={{ textAlign: 'center' }}>
+            <div style={{
+              width: 60, height: 60, borderRadius: '50%',
+              background: C.successBg, border: `1px solid ${C.successBorder}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 18px'
+            }}>
+              <Check size={30} color={C.success} />
+            </div>
+            <h3 style={{ fontFamily: FONT_DISPLAY, fontSize: 22, fontWeight: 700, color: C.navy, marginBottom: 10 }}>
+              Thank You!
+            </h3>
+            <p style={{ fontSize: 14, color: C.text500, lineHeight: 1.6 }}>
+              Thank you for submitting. Our admin will contact you.
+            </p>
+            <button
+              className="pgos-btn-primary"
+              style={{ width: '100%', marginTop: 24, padding: '14px 24px', fontSize: 15, borderRadius: 12 }}
+              onClick={() => setShowSuccessModal(false)}
+            >
+              OK
             </button>
           </div>
         </div>
