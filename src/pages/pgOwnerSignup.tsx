@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  User, Check, Loader, DollarSign, X, MapPin, Video, Camera,
+  User, Check, Loader, DollarSign, X, MapPin, Camera,
   ChevronRight, Shield, Star, Zap, Building2, Phone, Mail,
   Lock, Globe, CheckCircle2
 } from 'lucide-react';
@@ -326,7 +326,8 @@ const GLOBAL_CSS = `
     display: flex; flex-direction: column; align-items: center; gap: 6px;
     font-family: ${FONT_BODY};
   }
-  .pgos-cat-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+  .pgos-cat-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+  .pgos-cat-btn:disabled { cursor: not-allowed; opacity: 0.55; }
 
   /* ── Location success banner ── */
   .pgos-loc-success {
@@ -416,6 +417,17 @@ const IMAGE_CATS = [
   { id: 'entrance', label: 'Entrance',    emoji: '🚧', desc: 'Gate / Entry',       color: '#dc2626' },
   { id: 'other',    label: 'Other',       emoji: '📷', desc: 'Miscellaneous',      color: '#64748b' },
 ];
+
+const CAT_LIMITS: Record<string, number> = {
+  banner: 1,
+  hall: 1,
+  room: 4,
+  kitchen: 2,
+  washroom: 4,
+  corridor: 1,
+  entrance: 1,
+  other: 2,
+};
 
 const mkPg = () => ({
   name: '', type: 'colive', totalRooms: '',
@@ -518,8 +530,15 @@ export function PGOwnerSignup() {
   const onCatSelect = async (cat: string) => {
     if (selPgIdx === null || !pending) return;
     setShowModal(false);
-    const imgs = await Promise.all(pending.map(f => compress(f).then(url => ({ url, category: cat }))));
-    const u = [...pgList]; u[selPgIdx].images = [...u[selPgIdx].images, ...imgs]; setPgList(u);
+    // Banner is limited to a single image
+    const filesToAdd = cat === 'banner' ? pending.slice(0, 1) : pending;
+    const imgs = await Promise.all(filesToAdd.map(f => compress(f).then(url => ({ url, category: cat }))));
+    const u = [...pgList];
+    if (cat === 'banner') {
+      u[selPgIdx].images = u[selPgIdx].images.filter(img => img.category !== 'banner');
+    }
+    u[selPgIdx].images = [...u[selPgIdx].images, ...imgs];
+    setPgList(u);
     setSelPgIdx(null); setPending(null);
   };
   const removeImg = (pi: number, ii: number) => { const u = [...pgList]; u[pi].images = u[pi].images.filter((_, i) => i !== ii); setPgList(u); };
@@ -940,6 +959,7 @@ export function PGOwnerSignup() {
             {/* Photos */}
             <div style={{ marginBottom: 22 }}>
               <div className="pgos-section-title"><Camera size={13} /> Property Photos <span style={{ textTransform: 'none', letterSpacing: 0, fontSize: 11, fontWeight: 500, color: C.text400, marginLeft: 4 }}>(at least 2 required)</span></div>
+              <p style={{ fontSize: 12, color: C.text400, marginBottom: 12 }}>Each photo should be less than 10MB.</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {pg.images.map((img, ii) => (
                   <div key={ii} className="pgos-thumb" style={{ width: 90, height: 90 }}>
@@ -958,26 +978,6 @@ export function PGOwnerSignup() {
               </div>
             </div>
 
-            {/* Videos */}
-            <div>
-              <div className="pgos-section-title">
-                <Video size={13} /> Video Tour
-                <span style={{ fontSize: 11, color: C.text400, fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: 4 }}>(optional)</span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                {pg.videos.map((vid, vi) => (
-                  <div key={vi} className="pgos-thumb" style={{ width: 130, height: 88 }}>
-                    <video src={vid} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <button className="pgos-thumb-remove" onClick={() => removeVid(pi, vi)}><X size={11} color="#fff" /></button>
-                  </div>
-                ))}
-                <label className="pgos-upload-box" style={{ width: 130, height: 88, gap: 5 }}>
-                  <Video size={20} color={C.accent} />
-                  <span style={{ fontSize: 10, color: C.text400 }}>Add Video</span>
-                  <input type="file" accept="video/*" multiple style={{ display: 'none' }} onChange={e => onPickVideos(pi, e)} />
-                </label>
-              </div>
-            </div>
           </div>
         ))}
 
@@ -1034,19 +1034,37 @@ export function PGOwnerSignup() {
               <p style={{ fontSize: 13, color: C.text500 }}>Which area do these {pending?.length} photo(s) show?</p>
             </div>
             <div className="pgos-cat-grid">
-              {IMAGE_CATS.map(cat => (
-                <button
-                  key={cat.id}
-                  className="pgos-cat-btn"
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = cat.color; (e.currentTarget as HTMLButtonElement).style.background = '#f0f7ff'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = C.border; (e.currentTarget as HTMLButtonElement).style.background = '#f8fafc'; }}
-                  onClick={() => onCatSelect(cat.id)}
-                >
-                  <span style={{ fontSize: 26 }}>{cat.emoji}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: C.text900 }}>{cat.label}</span>
-                  <span style={{ fontSize: 11, color: C.text400 }}>{cat.desc}</span>
-                </button>
-              ))}
+              {IMAGE_CATS.map(cat => {
+                const count = selPgIdx !== null ? pgList[selPgIdx].images.filter(img => img.category === cat.id).length : 0;
+                const limit = CAT_LIMITS[cat.id];
+                const disabled = count + (pending?.length || 0) > limit;
+                return (
+                  <button
+                    key={cat.id}
+                    className="pgos-cat-btn"
+                    disabled={disabled}
+                    style={{ position: 'relative' }}
+                    onMouseEnter={e => {
+                      if (disabled) return;
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = cat.color;
+                      (e.currentTarget as HTMLButtonElement).style.background = '#f0f7ff';
+                    }}
+                    onMouseLeave={e => {
+                      if (disabled) return;
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = C.border;
+                      (e.currentTarget as HTMLButtonElement).style.background = '#f8fafc';
+                    }}
+                    onClick={() => onCatSelect(cat.id)}
+                  >
+                    <span style={{ position: 'absolute', top: 6, right: 8, fontSize: 10, fontWeight: 700, color: disabled ? C.danger : C.text400 }}>
+                      {count}/{limit}
+                    </span>
+                    <span style={{ fontSize: 26 }}>{cat.emoji}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.text900 }}>{cat.label}</span>
+                    <span style={{ fontSize: 11, color: disabled ? C.danger : C.text400 }}>{disabled ? 'Limit reached' : cat.desc}</span>
+                  </button>
+                );
+              })}
             </div>
             <button className="pgos-btn-ghost" style={{ width: '100%', marginTop: 14 }}
               onClick={() => { setShowModal(false); setSelPgIdx(null); setPending(null); }}>

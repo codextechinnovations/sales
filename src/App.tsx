@@ -11,6 +11,7 @@ import { DailyActivity } from './pages/DailyActivity';
 import { MyPGs } from './pages/MyPGs';
 import { AddRooms } from './pages/AddRooms';
 import { FieldManual } from './pages/FieldManual';
+import { WhatsAppButton } from './components/WhatsAppButton';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -59,6 +60,7 @@ export default function App() {
   return (
     <AuthProvider>
       <RouterProvider router={router} />
+      <WhatsAppButton />
     </AuthProvider>
   );
 }
